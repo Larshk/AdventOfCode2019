@@ -1,6 +1,5 @@
 package adventofcode2019.day3;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -35,8 +34,7 @@ public class DayThreeTest {
     }
 
     @Test
-    @Ignore
     public void testDayThreePartTwoSolution() throws IOException {
-        collector.checkThat(task.solvePartTwo(getInput("/day3/input.txt")), is("1337"));
+        collector.checkThat(task.solvePartTwo(getInput("/day3/input.txt")), is("93654"));
     }
 }

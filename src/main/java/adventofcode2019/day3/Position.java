@@ -5,11 +5,12 @@ import java.util.Objects;
 import static java.lang.Math.abs;
 
 class Position {
-    private int x, y;
+    private int x, y, step;
 
-    Position(int x, int y) {
+    Position(int x, int y, int step) {
         this.x = x;
         this.y = y;
+        this.step = step;
     }
 
     int manhattanDistanceTo(int otherX, int otherY) {
@@ -22,6 +23,10 @@ class Position {
                 "x=" + x +
                 ", y=" + y +
                 '}';
+    }
+
+    int getStep() {
+        return step;
     }
 
     @Override

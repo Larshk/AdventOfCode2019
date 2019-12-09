@@ -51,7 +51,7 @@ public class DaySeven implements DailyTask {
                             throw new IllegalStateException("Interrupted", e);
                         }
                     })
-                    .reduce(Integer::max)
+                    .reduce(Long::max)
                     .orElseThrow(IllegalStateException::new)
         );
     }
@@ -67,10 +67,10 @@ public class DaySeven implements DailyTask {
         return output;
     }
 
-    private int calculateThrusterSignalWithFeedbackLoop(
+    private long calculateThrusterSignalWithFeedbackLoop(
             String amplifierControlSoftware,
             List<Integer> phaseSettings) throws InterruptedException {
-        List<BlockingQueue<Integer>> ioQueues = new ArrayList<>();
+        List<BlockingQueue<Long>> ioQueues = new ArrayList<>();
         List<IntcodeComputer> computers = new ArrayList<>();
 
         for (int i = 0; i < 5; i++) {
@@ -78,8 +78,8 @@ public class DaySeven implements DailyTask {
         }
 
         for (int i = 0; i < 5; i++) {
-            BlockingQueue<Integer> input = ioQueues.get(i);
-            BlockingQueue<Integer> output = ioQueues.get(i + 1 > 4 ? 0 : i + 1);
+            BlockingQueue<Long> input = ioQueues.get(i);
+            BlockingQueue<Long> output = ioQueues.get(i + 1 > 4 ? 0 : i + 1);
             computers.add(IntcodeComputer.parseIntcodeCode(
                     amplifierControlSoftware,
                     input,
@@ -90,11 +90,11 @@ public class DaySeven implements DailyTask {
 
         // Provide each amplifier its phase setting at its first input instruction
         for (int i = 0; i < 5; i++) {
-            ioQueues.get(i).offer(phaseSettings.get(i));
+            ioQueues.get(i).offer((long) phaseSettings.get(i));
         }
 
         // To start the process, a 0 signal is sent to amplifier A's input exactly once
-        ioQueues.get(0).offer(0);
+        ioQueues.get(0).offer(0L);
 
         // Start the computers
         computers.forEach(Thread::start);

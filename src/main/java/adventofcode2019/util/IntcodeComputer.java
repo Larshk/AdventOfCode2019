@@ -5,40 +5,42 @@ import java.util.concurrent.BlockingQueue;
 
 public class IntcodeComputer extends Thread {
     private int instructionPointer;
-    private final int[] originalMemory;
-    private final int[] memory;
+    private int relativeBase;
+    private final Memory originalMemory;
+    private Memory memory;
     
-    private final BlockingQueue<Integer> inputQueue;
-    private final BlockingQueue<Integer> outputQueue;
-    private Integer lastOutput = null;
+    private final BlockingQueue<Long> inputQueue;
+    private final BlockingQueue<Long> outputQueue;
+    private Long lastOutput = null;
 
     private enum ParameterMode {
-        POSITION, IMMEDIATE
+        POSITION, IMMEDIATE, RELATIVE
     }
 
     private enum Instruction {
-        ADD(1, 3),
-        MULTIPLY(2, 3),
-        INPUT(3, 1),
-        OUTPUT(4, 1),
-        JUMP_IF_TRUE(5, 2),
-        JUMP_IF_FALSE(6, 2),
-        LESS_THAN(7, 3),
-        EQUALS(8, 3),
-        STOP(99, 0);
+        ADD(1L, 3),
+        MULTIPLY(2L, 3),
+        INPUT(3L, 1),
+        OUTPUT(4L, 1),
+        JUMP_IF_TRUE(5L, 2),
+        JUMP_IF_FALSE(6L, 2),
+        LESS_THAN(7L, 3),
+        EQUALS(8L, 3),
+        ADJUST_RELATIVE_BASE(9L, 1),
+        STOP(99L, 0);
 
-        private final int opcode;
+        private final long opcode;
         private final int numberOfParameters;
 
-        Instruction(int opcode, int numberOfParameters) {
+        Instruction(long opcode, int numberOfParameters) {
             this.opcode = opcode;
             this.numberOfParameters = numberOfParameters;
         }
 
-        public static IntcodeComputer.Instruction fromOpcode(int opcode) {
+        public static IntcodeComputer.Instruction fromOpcode(long opcode) {
             String opcodeString = String.valueOf(opcode);
             String opcodeOnlyString = opcodeString.length() > 2 ? opcodeString.substring(opcodeString.length() - 2) : opcodeString;
-            int opcodeOnly = Integer.parseInt(opcodeOnlyString);
+            long opcodeOnly = Long.parseLong(opcodeOnlyString);
 
             return Arrays.stream(values())
                     .filter(i -> i.opcode == opcodeOnly)
@@ -47,12 +49,45 @@ public class IntcodeComputer extends Thread {
         }
     }
 
+    private static class Memory {
+        private long[] memory;
+
+        private Memory(long[] initialState) {
+            init(initialState);
+        }
+
+        private Memory(Memory initialState) {
+            init(initialState.memory);
+        }
+
+        private void init(long[] memory) {
+            this.memory = Arrays.copyOf(memory, memory.length);
+        }
+
+        private long read(int address) {
+            // Read from memory, or return 0 if outside memory space without expanding
+            return address >= memory.length ? 0 : memory[address];
+        }
+
+        private int readInt(int address) {
+            return (int) read(address);
+        }
+
+        private void write(int address, long value) {
+            if (address >= memory.length) {
+                //System.out.println("Expanding memory to " + (address + 1) + " longs");
+                memory = Arrays.copyOf(memory, address + 1);
+            }
+            memory[address] = value;
+        }
+    }
+
     public IntcodeComputer(
-            int[] memory,
-            BlockingQueue<Integer> inputQueue,
-            BlockingQueue<Integer> outputQueue) {
-        this.originalMemory = Arrays.copyOf(memory, memory.length);
-        this.memory = Arrays.copyOf(memory, memory.length);
+            long[] memory,
+            BlockingQueue<Long> inputQueue,
+            BlockingQueue<Long> outputQueue) {
+        this.originalMemory = new Memory(memory);
+        this.memory = new Memory(memory);
 
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
@@ -60,29 +95,29 @@ public class IntcodeComputer extends Thread {
 
     public static IntcodeComputer parseIntcodeCode(
             String input,
-            BlockingQueue<Integer> inputQueue,
-            BlockingQueue<Integer> outputQueue) {
+            BlockingQueue<Long> inputQueue,
+            BlockingQueue<Long> outputQueue) {
         String[] memoryStrings = input.split(",");
-        int[] memory = new int[memoryStrings.length];
+        long[] memory = new long[memoryStrings.length];
         int i = 0;
         for (String memoryStr : memoryStrings) {
-            memory[i++] = Integer.parseInt(memoryStr);
+            memory[i++] = Long.parseLong(memoryStr);
         }
         return new IntcodeComputer(memory, inputQueue, outputQueue);
     }
 
-    public void setNoun(int noun) {
-        memory[1] = noun;
+    public void setNoun(long noun) {
+        memory.write(1, noun);
     }
 
-    public void setVerb(int verb) {
-        memory[2] = verb;
+    public void setVerb(long verb) {
+        memory.write(2, verb);
     }
 
     @Override
     public void run() {
         try {
-            while (memory[instructionPointer] != 99) {
+            while (memory.read(instructionPointer) != Instruction.STOP.opcode) {
                 cycle();
             }
         } catch (InterruptedException e) {
@@ -91,14 +126,15 @@ public class IntcodeComputer extends Thread {
     }
 
     public void reset() {
-        System.arraycopy(originalMemory, 0, memory, 0, originalMemory.length);
+        memory = new Memory(originalMemory);
         instructionPointer = 0;
+        relativeBase = 0;
         inputQueue.clear();
         outputQueue.clear();
     }
 
     private void cycle() throws InterruptedException {
-        int opcode = memory[instructionPointer];
+        long opcode = memory.read(instructionPointer);
         Instruction instruction = Instruction.fromOpcode(opcode);
         int destination;
 
@@ -106,41 +142,44 @@ public class IntcodeComputer extends Thread {
 
         switch (instruction) {
             case ADD:
-                destination = memory[instructionPointer + 3];
-                memory[destination] = getOperand(opcode, 1) + getOperand(opcode, 2);
+                destination = getOperandForWrite(opcode, 3);
+                memory.write(destination, getOperand(opcode, 1) + getOperand(opcode, 2));
                 break;
             case MULTIPLY:
-                destination = memory[instructionPointer + 3];
-                memory[destination] = getOperand(opcode, 1) * getOperand(opcode, 2);
+                destination = getOperandForWrite(opcode, 3);
+                memory.write(destination, getOperand(opcode, 1) * getOperand(opcode, 2));
                 break;
             case INPUT:
-                destination = memory[instructionPointer + 1];
-                memory[destination] = inputQueue.take();
+                destination = getOperandForWrite(opcode, 1);
+                memory.write(destination, inputQueue.take());
                 break;
             case OUTPUT:
-                int output = getOperand(opcode, 1);
+                long output = getOperand(opcode, 1);
                 outputQueue.offer(output);
                 lastOutput = output;
                 break;
             case JUMP_IF_TRUE:
                 if (getOperand(opcode, 1) != 0) {
-                    instructionPointer = getOperand(opcode, 2);
+                    instructionPointer = (int) getOperand(opcode, 2);
                     instructionPointerDelta = 0;
                 }
                 break;
             case JUMP_IF_FALSE:
                 if (getOperand(opcode, 1) == 0) {
-                    instructionPointer = getOperand(opcode, 2);
+                    instructionPointer = (int) getOperand(opcode, 2);
                     instructionPointerDelta = 0;
                 }
                 break;
             case LESS_THAN:
-                destination = memory[instructionPointer + 3];
-                memory[destination] = getOperand(opcode, 1) < getOperand(opcode, 2) ? 1 : 0;
+                destination = getOperandForWrite(opcode, 3);
+                memory.write(destination, getOperand(opcode, 1) < getOperand(opcode, 2) ? 1 : 0);
                 break;
             case EQUALS:
-                destination = memory[instructionPointer + 3];
-                memory[destination] = getOperand(opcode, 1) == getOperand(opcode, 2) ? 1 : 0;
+                destination = getOperandForWrite(opcode, 3);
+                memory.write(destination, getOperand(opcode, 1) == getOperand(opcode, 2) ? 1 : 0);
+                break;
+            case ADJUST_RELATIVE_BASE:
+                relativeBase += getOperand(opcode, 1);
                 break;
             default:
                 throw new IllegalStateException("Unsupported opcode: " + instruction + " at instruction pointer " + instructionPointer);
@@ -149,17 +188,37 @@ public class IntcodeComputer extends Thread {
         instructionPointer += instructionPointerDelta;
     }
 
-    public Integer getLastOutput() {
+    public Long getLastOutput() {
         return lastOutput;
     }
 
-    private int getOperand(int opcode, int i) {
-        return parameterMode(opcode, i) == ParameterMode.POSITION
-                ? memory[memory[instructionPointer + i]]
-                : memory[instructionPointer + i];
+    private long getOperand(long opcode, int i) {
+        switch (parameterMode(opcode, i)) {
+            case POSITION:
+                return memory.read(memory.readInt(instructionPointer + i));
+            case IMMEDIATE:
+                return memory.read(instructionPointer + i);
+            case RELATIVE:
+                return memory.read(memory.readInt(instructionPointer + i) + relativeBase);
+            default:
+                throw new IllegalStateException("Unknown parameter mode " + parameterMode(opcode, i));
+        }
     }
 
-    private ParameterMode parameterMode(int opcode, int parameterIndex) {
+    private int getOperandForWrite(long opcode, int i) {
+        switch (parameterMode(opcode, i)) {
+            case POSITION:
+                return memory.readInt(instructionPointer + i);
+            case IMMEDIATE:
+                throw new IllegalStateException("Parameter mode IMMEDIATE used to resolve write address");
+            case RELATIVE:
+                return memory.readInt(instructionPointer + i) + relativeBase;
+            default:
+                throw new IllegalStateException("Unknown parameter mode " + parameterMode(opcode, i));
+        }
+    }
+
+    private ParameterMode parameterMode(long opcode, int parameterIndex) {
         String opcodeString = String.valueOf(opcode);
         if (opcodeString.length() < 2) {
             return ParameterMode.POSITION;

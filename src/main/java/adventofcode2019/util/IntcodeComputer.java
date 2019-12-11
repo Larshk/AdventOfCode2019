@@ -12,6 +12,7 @@ public class IntcodeComputer extends Thread {
     private final BlockingQueue<Long> inputQueue;
     private final BlockingQueue<Long> outputQueue;
     private Long lastOutput = null;
+    private boolean terminated = false;
 
     private enum ParameterMode {
         POSITION, IMMEDIATE, RELATIVE
@@ -114,6 +115,10 @@ public class IntcodeComputer extends Thread {
         memory.write(2, verb);
     }
 
+    public boolean hasTerminated() {
+        return terminated;
+    }
+
     @Override
     public void run() {
         try {
@@ -122,6 +127,8 @@ public class IntcodeComputer extends Thread {
             }
         } catch (InterruptedException e) {
             System.err.println("IntComputer was interrupted");
+        } finally {
+            terminated = true;
         }
     }
 

@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+import static adventofcode2019.util.IntcodeComputer.END_OF_OUTPUT;
+
 /**
  * Day 11: Space Police
  * https://adventofcode.com/2019/day/11
@@ -113,6 +115,9 @@ public class DayEleven implements DailyTask {
             while (!robot.hasTerminated()) {
                 inputQueue.add(panels.readColor());
                 long colorToPaint = outputQueue.take();
+                if (colorToPaint == END_OF_OUTPUT) {
+                    break;
+                }
                 long directionToTurn = outputQueue.take();
 
                 panels.paint(colorToPaint);
@@ -147,6 +152,9 @@ public class DayEleven implements DailyTask {
             while (!robot.hasTerminated()) {
                 inputQueue.add(panels.readColor());
                 long colorToPaint = outputQueue.take();
+                if (colorToPaint == END_OF_OUTPUT) {
+                    break;
+                }
                 long directionToTurn = outputQueue.take();
 
                 panels.paint(colorToPaint);

@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 
 public class IntcodeComputer extends Thread {
+    public static final long END_OF_OUTPUT = Long.MIN_VALUE;
+
     private int instructionPointer;
     private int relativeBase;
     private final Memory originalMemory;
@@ -129,6 +131,7 @@ public class IntcodeComputer extends Thread {
             System.err.println("IntComputer was interrupted");
         } finally {
             terminated = true;
+            outputQueue.offer(END_OF_OUTPUT);
         }
     }
 

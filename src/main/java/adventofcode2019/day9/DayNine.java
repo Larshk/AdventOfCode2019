@@ -7,6 +7,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.stream.Collectors;
 
+import static adventofcode2019.util.IntcodeComputer.END_OF_OUTPUT;
+
 /**
  * Day 9: Sensor Boost
  * https://adventofcode.com/2019/day/9
@@ -36,10 +38,12 @@ public class DayNine implements DailyTask {
 
         try {
             computer.join();
-            return outputQueue.stream().map(String::valueOf).collect(Collectors.joining(","));
+            return outputQueue.stream()
+                    .filter(l -> l != END_OF_OUTPUT)
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted", e);
         }
     }
-
 }

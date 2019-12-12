@@ -16,7 +16,7 @@ public class DayTenTest {
     public ErrorCollector collector = new ErrorCollector();
 
     @Test
-    public void testDayNinePartOneExamples() {
+    public void testDayTenPartOneExamples() {
         collector.checkThat(task.solvePartOne(
                 ".#..#\n" +
                 ".....\n" +
@@ -84,12 +84,12 @@ public class DayTenTest {
     }
 
     @Test
-    public void testDayNinePartOneSolution() throws IOException {
+    public void testDayTenPartOneSolution() throws IOException {
         collector.checkThat(task.solvePartOne(getInput("/day10/input.txt")), is("269"));
     }
 
     @Test
-    public void testDayNinePartTwoSolution() throws IOException {
+    public void testDayTenPartTwoSolution() throws IOException {
         collector.checkThat(task.solvePartTwo(getInput("/day10/input.txt")), is("612"));
     }
 }

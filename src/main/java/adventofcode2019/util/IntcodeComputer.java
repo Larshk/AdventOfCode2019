@@ -2,6 +2,8 @@ package adventofcode2019.util;
 
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.stream.Stream;
 
 public class IntcodeComputer extends Thread {
     public static final long END_OF_OUTPUT = Long.MIN_VALUE;
@@ -109,12 +111,22 @@ public class IntcodeComputer extends Thread {
         return new IntcodeComputer(memory, inputQueue, outputQueue);
     }
 
-    public void setNoun(long noun) {
-        memory.write(1, noun);
+    public static IntcodeComputer parseIntcodeCode(String input) {
+        String[] memoryStrings = input.split(",");
+        long[] memory = new long[memoryStrings.length];
+        int i = 0;
+        for (String memoryStr : memoryStrings) {
+            memory[i++] = Long.parseLong(memoryStr);
+        }
+
+        BlockingQueue<Long> inputQueue = new LinkedTransferQueue<>();
+        BlockingQueue<Long> outputQueue = new LinkedTransferQueue<>();
+
+        return new IntcodeComputer(memory, inputQueue, outputQueue);
     }
 
-    public void setVerb(long verb) {
-        memory.write(2, verb);
+    public void setMemory(int address, long value) {
+        memory.write(address, value);
     }
 
     public boolean hasTerminated() {
@@ -141,6 +153,18 @@ public class IntcodeComputer extends Thread {
         relativeBase = 0;
         inputQueue.clear();
         outputQueue.clear();
+    }
+
+    public long read() throws InterruptedException {
+        return outputQueue.take();
+    }
+
+    public Stream<Long> stream() {
+        return outputQueue.stream();
+    }
+
+    public void write(long input) {
+        inputQueue.add(input);
     }
 
     private void cycle() throws InterruptedException {

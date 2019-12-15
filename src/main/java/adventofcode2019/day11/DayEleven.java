@@ -6,8 +6,6 @@ import adventofcode2019.util.IntcodeComputer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedTransferQueue;
 
 import static adventofcode2019.util.IntcodeComputer.END_OF_OUTPUT;
 
@@ -101,24 +99,18 @@ public class DayEleven implements DailyTask {
     public String solvePartOne(String input) {
         PanelGrid panels = new PanelGrid();
 
-        BlockingQueue<Long> inputQueue = new LinkedTransferQueue<>();
-        BlockingQueue<Long> outputQueue = new LinkedTransferQueue<>();
-
-        IntcodeComputer robot = IntcodeComputer.parseIntcodeCode(
-                input,
-                inputQueue,
-                outputQueue);
+        IntcodeComputer robot = IntcodeComputer.parseIntcodeCode(input);
 
         try {
             robot.start();
 
             while (!robot.hasTerminated()) {
-                inputQueue.add(panels.readColor());
-                long colorToPaint = outputQueue.take();
+                robot.write(panels.readColor());
+                long colorToPaint = robot.read();
                 if (colorToPaint == END_OF_OUTPUT) {
                     break;
                 }
-                long directionToTurn = outputQueue.take();
+                long directionToTurn = robot.read();
 
                 panels.paint(colorToPaint);
                 panels.turn(directionToTurn);
@@ -138,24 +130,18 @@ public class DayEleven implements DailyTask {
         PanelGrid panels = new PanelGrid();
         panels.paint(1L);
 
-        BlockingQueue<Long> inputQueue = new LinkedTransferQueue<>();
-        BlockingQueue<Long> outputQueue = new LinkedTransferQueue<>();
-
-        IntcodeComputer robot = IntcodeComputer.parseIntcodeCode(
-                input,
-                inputQueue,
-                outputQueue);
+        IntcodeComputer robot = IntcodeComputer.parseIntcodeCode(input);
 
         try {
             robot.start();
 
             while (!robot.hasTerminated()) {
-                inputQueue.add(panels.readColor());
-                long colorToPaint = outputQueue.take();
+                robot.write(panels.readColor());
+                long colorToPaint = robot.read();
                 if (colorToPaint == END_OF_OUTPUT) {
                     break;
                 }
-                long directionToTurn = outputQueue.take();
+                long directionToTurn = robot.read();
 
                 panels.paint(colorToPaint);
                 panels.turn(directionToTurn);

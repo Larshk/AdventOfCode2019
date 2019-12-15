@@ -79,7 +79,7 @@ public class DaySeven implements DailyTask {
 
         for (int i = 0; i < 5; i++) {
             BlockingQueue<Long> input = ioQueues.get(i);
-            BlockingQueue<Long> output = ioQueues.get(i + 1 > 4 ? 0 : i + 1);
+            BlockingQueue<Long> output = ioQueues.get((i + 1) % 5);
             computers.add(IntcodeComputer.parseIntcodeCode(
                     amplifierControlSoftware,
                     input,

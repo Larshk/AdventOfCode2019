@@ -3,8 +3,6 @@ package adventofcode2019.day9;
 import adventofcode2019.DailyTask;
 import adventofcode2019.util.IntcodeComputer;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.stream.Collectors;
 
 import static adventofcode2019.util.IntcodeComputer.END_OF_OUTPUT;
@@ -25,20 +23,14 @@ public class DayNine implements DailyTask {
     }
 
     private String solve(String inputProgram, long inputData) {
-        BlockingQueue<Long> inputQueue = new LinkedTransferQueue<>();
-        BlockingQueue<Long> outputQueue = new LinkedTransferQueue<>();
-        IntcodeComputer computer = IntcodeComputer.parseIntcodeCode(
-                inputProgram,
-                inputQueue,
-                outputQueue);
+        IntcodeComputer computer = IntcodeComputer.parseIntcodeCode(inputProgram);
 
         computer.start();
-
-        inputQueue.offer(inputData);
+        computer.write(inputData);
 
         try {
             computer.join();
-            return outputQueue.stream()
+            return computer.stream()
                     .filter(l -> l != END_OF_OUTPUT)
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));

@@ -1,10 +1,6 @@
 package adventofcode2019.day2;
 
-import adventofcode2019.day1.DayOne;
 import adventofcode2019.util.IntcodeProgram;
-import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -12,7 +8,6 @@ import org.junit.rules.ErrorCollector;
 import java.io.IOException;
 
 import static adventofcode2019.InputReader.getInput;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 

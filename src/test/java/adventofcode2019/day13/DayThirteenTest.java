@@ -16,12 +16,12 @@ public class DayThirteenTest {
     public ErrorCollector collector = new ErrorCollector();
 
     @Test
-    public void testDayElevenPartOneSolution() throws IOException {
+    public void testDayThirteenPartOneSolution() throws IOException {
         collector.checkThat(task.solvePartOne(getInput("/day13/input.txt")), is("326"));
     }
 
     @Test
-    public void testDayElevenPartTwoSolution() throws IOException {
+    public void testDayThirteenPartTwoSolution() throws IOException {
         collector.checkThat(task.solvePartTwo(getInput("/day13/input.txt")), is("15988"));
     }
 }
